@@ -6,10 +6,12 @@ LABORATORY_ROLES = ("Laboratory Technician", "Laboratory Supervisor")
 LABORATORY_TRANSACTION_DOCTYPES = ("Laboratory Truck Test",)
 LABORATORY_SETTINGS_DOCTYPES = ("Laboratory Settings",)
 LABORATORY_SETTINGS_DEFAULTS = {
+	"evaluation_mode": "Hybrid",
 	"minimum_flash_point": 0,
 	"maximum_flash_point": 0,
 	"minimum_viscosity": 0,
 	"maximum_viscosity": 0,
+	"allow_failed_test_exception": 0,
 	"auto_update_weight_bridge_ticket": 1,
 }
 
@@ -143,7 +145,7 @@ def ensure_weight_bridge_ticket_lab_fields():
 					"insert_after": "laboratory_section",
 					"in_standard_filter": 1,
 					"label": "Laboratory Status",
-					"options": "\nPending Laboratory Test\nPassed\nRejected",
+					"options": "\nPending Laboratory Test\nPassed\nRejected\nAccepted With Exception",
 					"read_only": 1,
 				},
 				{

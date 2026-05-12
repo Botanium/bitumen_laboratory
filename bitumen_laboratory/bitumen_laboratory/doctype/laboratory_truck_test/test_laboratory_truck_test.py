@@ -24,17 +24,18 @@ class TestLaboratoryTruckTest(FrappeTestCase):
 		ticket = self._new_weight_bridge_ticket()
 		ticket.insert(ignore_permissions=True)
 
-		lab_test = self._new_laboratory_test(weight_bridge_ticket=None, pool=self.pool)
+		lab_test = self._new_laboratory_test(weight_bridge_ticket=None, pool=None)
 		lab_test.insert(ignore_permissions=True)
 
 		self.assertEqual(lab_test.weight_bridge_ticket, ticket.name)
 		self.assertEqual(lab_test.driver_name, "Laboratory Test Driver")
 		self.assertEqual(lab_test.cargo_item, "VR")
 		self.assertEqual(lab_test.weight, 45000)
-		self.assertEqual(lab_test.laboratory_status, "Passed")
+		self.assertEqual(lab_test.laboratory_status, "Draft")
 
-	def test_passed_lab_test_requires_pool_and_updates_weight_bridge_ticket(self):
+	def test_automatic_passed_lab_test_requires_pool_and_updates_weight_bridge_ticket(self):
 		self._set_laboratory_settings(
+			evaluation_mode="Automatic",
 			minimum_flash_point=100,
 			maximum_flash_point=300,
 			minimum_viscosity=10,
@@ -70,6 +71,7 @@ class TestLaboratoryTruckTest(FrappeTestCase):
 
 	def test_rejected_lab_test_does_not_require_pool_and_marks_ticket_rejected(self):
 		self._set_laboratory_settings(
+			evaluation_mode="Automatic",
 			minimum_flash_point=100,
 			maximum_flash_point=300,
 			minimum_viscosity=10,
@@ -97,9 +99,133 @@ class TestLaboratoryTruckTest(FrappeTestCase):
 			"Rejected",
 		)
 
+	def test_hybrid_mode_without_criteria_saves_draft_and_blocks_submit(self):
+		ticket = self._new_weight_bridge_ticket()
+		ticket.insert(ignore_permissions=True)
+
+		lab_test = self._new_laboratory_test(pool=None, flash_point=180, viscosity=45)
+		lab_test.insert(ignore_permissions=True)
+
+		self.assertEqual(lab_test.laboratory_status, "Draft")
+		with self.assertRaises(frappe.ValidationError):
+			lab_test.submit()
+
+	def test_manual_passed_lab_test_uses_operator_decision(self):
+		self._set_laboratory_settings(evaluation_mode="Manual")
+		ticket = self._new_weight_bridge_ticket()
+		ticket.insert(ignore_permissions=True)
+
+		with self.assertRaises(frappe.ValidationError):
+			self._new_laboratory_test(
+				pool=None,
+				flash_point=180,
+				viscosity=45,
+				laboratory_status="Passed",
+			).insert(ignore_permissions=True)
+
+		lab_test = self._new_laboratory_test(
+			pool=self.pool,
+			flash_point=180,
+			viscosity=45,
+			laboratory_status="Passed",
+		)
+		lab_test.insert(ignore_permissions=True)
+		lab_test.submit()
+
+		self.assertEqual(lab_test.laboratory_status, "Passed")
+		self.assertEqual(
+			frappe.db.get_value("Weight Bridge Ticket", ticket.name, "laboratory_status"),
+			"Passed",
+		)
+		self.assertEqual(
+			frappe.db.get_value("Weight Bridge Ticket", ticket.name, "laboratory_pool"),
+			self.pool,
+		)
+
+	def test_accepted_with_exception_routes_failed_test_to_pool_without_rejecting_ticket(self):
+		self._set_laboratory_settings(
+			evaluation_mode="Automatic",
+			minimum_flash_point=100,
+			maximum_flash_point=300,
+			minimum_viscosity=10,
+			maximum_viscosity=80,
+			allow_failed_test_exception=1,
+		)
+		ticket = self._new_weight_bridge_ticket()
+		ticket.insert(ignore_permissions=True)
+
+		lab_test = self._new_laboratory_test(
+			pool=self.pool,
+			flash_point=90,
+			viscosity=45,
+			accept_failed_result=1,
+			exception_reason="Management approved discounted intake.",
+		)
+		lab_test.insert(ignore_permissions=True)
+		lab_test.submit()
+
+		self.assertEqual(lab_test.laboratory_status, "Accepted With Exception")
+		self.assertEqual(
+			frappe.db.get_value("Weight Bridge Ticket", ticket.name, "laboratory_status"),
+			"Accepted With Exception",
+		)
+		self.assertEqual(
+			frappe.db.get_value("Weight Bridge Ticket", ticket.name, "laboratory_pool"),
+			self.pool,
+		)
+		self.assertEqual(
+			frappe.db.get_value("Weight Bridge Ticket", ticket.name, "ticket_status"),
+			"Pending Second Weight",
+		)
+
+	def test_accepted_with_exception_requires_settings_reason_and_pool(self):
+		self._set_laboratory_settings(
+			evaluation_mode="Automatic",
+			minimum_flash_point=100,
+			maximum_flash_point=300,
+			minimum_viscosity=10,
+			maximum_viscosity=80,
+		)
+		ticket = self._new_weight_bridge_ticket()
+		ticket.insert(ignore_permissions=True)
+
+		with self.assertRaises(frappe.ValidationError):
+			self._new_laboratory_test(
+				pool=self.pool,
+				flash_point=90,
+				viscosity=45,
+				accept_failed_result=1,
+				exception_reason="Management approved discounted intake.",
+			).insert(ignore_permissions=True)
+
+		self._set_laboratory_settings(allow_failed_test_exception=1)
+
+		with self.assertRaises(frappe.ValidationError):
+			self._new_laboratory_test(
+				pool=None,
+				flash_point=90,
+				viscosity=45,
+				accept_failed_result=1,
+				exception_reason="Management approved discounted intake.",
+			).insert(ignore_permissions=True)
+
+		with self.assertRaises(frappe.ValidationError):
+			self._new_laboratory_test(
+				pool=self.pool,
+				flash_point=90,
+				viscosity=45,
+				accept_failed_result=1,
+				exception_reason="",
+			).insert(ignore_permissions=True)
+
 	def test_laboratory_settings_validate_limit_ranges(self):
 		settings = frappe.get_single("Laboratory Settings")
 
+		settings.evaluation_mode = "Invalid"
+		with self.assertRaises(frappe.ValidationError):
+			settings.save(ignore_permissions=True)
+
+		settings.reload()
 		settings.minimum_flash_point = 300
 		settings.maximum_flash_point = 100
 		with self.assertRaises(frappe.ValidationError):
@@ -121,8 +247,15 @@ class TestLaboratoryTruckTest(FrappeTestCase):
 		self.assertEqual(test_meta.get_field("pool").options, "Warehouse")
 		self.assertEqual(test_meta.get_field("flash_point").fieldtype, "Float")
 		self.assertEqual(test_meta.get_field("viscosity").fieldtype, "Float")
+		self.assertIsNotNone(test_meta.get_field("accept_failed_result"))
+		self.assertIsNotNone(settings_meta.get_field("evaluation_mode"))
+		self.assertIsNotNone(settings_meta.get_field("allow_failed_test_exception"))
 		self.assertIsNotNone(weight_bridge_meta.get_field("laboratory_status"))
 		self.assertIsNotNone(weight_bridge_meta.get_field("laboratory_test"))
+		self.assertIn(
+			"Accepted With Exception",
+			weight_bridge_meta.get_field("laboratory_status").options.split("\n"),
+		)
 		self.assertIn("Rejected", weight_bridge_meta.get_field("ticket_status").options.split("\n"))
 		self.assertEqual(workspace.public, 1)
 
@@ -143,6 +276,7 @@ class TestLaboratoryTruckTest(FrappeTestCase):
 
 	def test_cancelled_laboratory_test_clears_ticket_lab_status(self):
 		self._set_laboratory_settings(
+			evaluation_mode="Automatic",
 			minimum_flash_point=100,
 			maximum_flash_point=300,
 			minimum_viscosity=10,
@@ -167,11 +301,11 @@ class TestLaboratoryTruckTest(FrappeTestCase):
 		)
 
 	def test_disabled_auto_update_keeps_weight_bridge_ticket_unchanged(self):
-		self._set_laboratory_settings(auto_update_weight_bridge_ticket=0)
+		self._set_laboratory_settings(evaluation_mode="Manual", auto_update_weight_bridge_ticket=0)
 		ticket = self._new_weight_bridge_ticket()
 		ticket.insert(ignore_permissions=True)
 
-		lab_test = self._new_laboratory_test(pool=self.pool)
+		lab_test = self._new_laboratory_test(pool=self.pool, laboratory_status="Passed")
 		lab_test.insert(ignore_permissions=True)
 		lab_test.submit()
 
@@ -179,18 +313,28 @@ class TestLaboratoryTruckTest(FrappeTestCase):
 		self.assertIsNone(frappe.db.get_value("Weight Bridge Ticket", ticket.name, "laboratory_test"))
 
 	def test_passed_lab_test_rejects_group_or_disabled_pool(self):
+		self._set_laboratory_settings(evaluation_mode="Manual")
 		ticket = self._new_weight_bridge_ticket()
 		ticket.insert(ignore_permissions=True)
 		group_pool = self._ensure_pool("Laboratory Group Pool", is_group=1)
 		disabled_pool = self._ensure_pool("Laboratory Disabled Pool", disabled=1)
 
 		with self.assertRaises(frappe.ValidationError):
-			self._new_laboratory_test(pool=group_pool).insert(ignore_permissions=True)
+			self._new_laboratory_test(pool=group_pool, laboratory_status="Passed").insert(ignore_permissions=True)
 
 		with self.assertRaises(frappe.ValidationError):
-			self._new_laboratory_test(pool=disabled_pool).insert(ignore_permissions=True)
+			self._new_laboratory_test(pool=disabled_pool, laboratory_status="Passed").insert(ignore_permissions=True)
 
-	def _new_laboratory_test(self, weight_bridge_ticket=None, pool=None, flash_point=180, viscosity=45):
+	def _new_laboratory_test(
+		self,
+		weight_bridge_ticket=None,
+		pool=None,
+		flash_point=180,
+		viscosity=45,
+		laboratory_status="Draft",
+		accept_failed_result=0,
+		exception_reason=None,
+	):
 		return frappe.get_doc(
 			{
 				"doctype": "Laboratory Truck Test",
@@ -200,6 +344,9 @@ class TestLaboratoryTruckTest(FrappeTestCase):
 				"pool": pool,
 				"flash_point": flash_point,
 				"viscosity": viscosity,
+				"laboratory_status": laboratory_status,
+				"accept_failed_result": accept_failed_result,
+				"exception_reason": exception_reason,
 			}
 		)
 

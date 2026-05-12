@@ -9,11 +9,14 @@
  "engine": "InnoDB",
  "field_order": [
   "test_limits_section",
+  "evaluation_mode",
   "minimum_flash_point",
   "maximum_flash_point",
   "limits_column_break",
   "minimum_viscosity",
   "maximum_viscosity",
+  "management_exception_section",
+  "allow_failed_test_exception",
   "weight_bridge_section",
   "auto_update_weight_bridge_ticket"
  ],
@@ -21,7 +24,16 @@
   {
    "fieldname": "test_limits_section",
    "fieldtype": "Section Break",
-   "label": "Test Limits"
+   "label": "Evaluation and Test Limits"
+  },
+  {
+   "default": "Hybrid",
+   "description": "Hybrid evaluates automatically only when Flash Point and Viscosity each have at least one configured limit. Manual lets users choose the result. Automatic waits for configured criteria, then evaluates every test.",
+   "fieldname": "evaluation_mode",
+   "fieldtype": "Select",
+   "label": "Evaluation Mode",
+   "options": "Hybrid\nManual\nAutomatic",
+   "reqd": 1
   },
   {
    "default": "0",
@@ -58,6 +70,18 @@
    "fieldtype": "Float",
    "label": "Maximum Viscosity",
    "precision": "3"
+  },
+  {
+   "fieldname": "management_exception_section",
+   "fieldtype": "Section Break",
+   "label": "Management Exception"
+  },
+  {
+   "default": "0",
+   "description": "Allow a failed laboratory result to be accepted into a pool with an exception reason instead of returning the truck.",
+   "fieldname": "allow_failed_test_exception",
+   "fieldtype": "Check",
+   "label": "Allow Failed Tests to be Accepted With Exception"
   },
   {
    "fieldname": "weight_bridge_section",
@@ -109,4 +133,3 @@
  "states": [],
  "track_changes": 1
 }
-

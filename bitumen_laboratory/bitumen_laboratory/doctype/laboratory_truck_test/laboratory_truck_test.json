@@ -26,6 +26,8 @@
   "viscosity",
   "result_column_break",
   "laboratory_status",
+  "accept_failed_result",
+  "exception_reason",
   "amended_from"
  ],
  "fields": [
@@ -124,7 +126,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Pool",
-   "mandatory_depends_on": "eval:doc.laboratory_status=='Passed'",
+   "mandatory_depends_on": "eval:doc.laboratory_status=='Passed' || doc.laboratory_status=='Accepted With Exception'",
    "options": "Warehouse"
   },
   {
@@ -159,8 +161,21 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Laboratory Status",
-   "options": "Draft\nPassed\nRejected",
-   "read_only": 1
+   "options": "Draft\nPassed\nRejected\nAccepted With Exception"
+  },
+  {
+   "default": "0",
+   "description": "Use only when management approves accepting failed test results into a pool.",
+   "fieldname": "accept_failed_result",
+   "fieldtype": "Check",
+   "label": "Accept Failed Result by Management Exception"
+  },
+  {
+   "depends_on": "eval:doc.accept_failed_result || doc.laboratory_status=='Accepted With Exception'",
+   "fieldname": "exception_reason",
+   "fieldtype": "Small Text",
+   "label": "Exception Reason",
+   "mandatory_depends_on": "eval:doc.accept_failed_result || doc.laboratory_status=='Accepted With Exception'"
   },
   {
    "fieldname": "amended_from",

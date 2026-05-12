@@ -1,2 +1,2 @@
 bitumen_laboratory.patches.v0_0_1.ensure_laboratory_setup
-
+bitumen_laboratory.patches.v0_0_2.ensure_hybrid_evaluation_setup

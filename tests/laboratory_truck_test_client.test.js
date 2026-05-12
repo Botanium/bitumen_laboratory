@@ -9,11 +9,12 @@ const SCRIPT_PATH = path.join(
 	"../bitumen_laboratory/bitumen_laboratory/doctype/laboratory_truck_test/laboratory_truck_test.js"
 );
 
-function loadScript(ticketResponse = {}) {
+function loadScript(ticketResponse = {}, settingsResponse = {}) {
 	const script = fs.readFileSync(SCRIPT_PATH, "utf8");
 	const context = {
 		calls: [],
 		alerts: [],
+		dbCalls: [],
 		queries: {},
 		buttons: [],
 		route: null,
@@ -31,6 +32,12 @@ function loadScript(ticketResponse = {}) {
 			},
 			show_alert(alert) {
 				context.alerts.push(alert);
+			},
+			db: {
+				get_doc(doctype, name) {
+					context.dbCalls.push({ doctype, name });
+					return Promise.resolve(settingsResponse);
+				},
 			},
 			ui: {
 				form: {
@@ -72,6 +79,15 @@ function createFrm(doc = {}) {
 		set_value(fieldname, value) {
 			this.doc[fieldname] = value;
 			return Promise.resolve();
+		},
+		set_df_property(fieldname, property, value) {
+			this.dfProperties = this.dfProperties || {};
+			this.dfProperties[fieldname] = this.dfProperties[fieldname] || {};
+			this.dfProperties[fieldname][property] = value;
+		},
+		toggle_display(fieldname, visible) {
+			this.displayed = this.displayed || {};
+			this.displayed[fieldname] = visible;
 		},
 		toggle_reqd(fieldname, required) {
 			this.required = this.required || {};
@@ -134,17 +150,86 @@ test("setup scopes pool and weight bridge ticket queries", () => {
 	}));
 });
 
-test("refresh displays passed status and requires pool", () => {
-	const context = loadScript();
+test("hybrid refresh without configured criteria keeps status editable and does not require pool", async () => {
+	const context = loadScript({}, {
+		evaluation_mode: "Hybrid",
+		minimum_flash_point: 0,
+		maximum_flash_point: 0,
+		minimum_viscosity: 0,
+		maximum_viscosity: 0,
+		allow_failed_test_exception: 0,
+	});
+	const frm = createFrm({
+		laboratory_status: "Draft",
+		weight_bridge_ticket: "WB-990201-01",
+	});
+
+	await context.handlers.refresh(frm);
+	frm.buttons[0].handler();
+
+	assert.equal(context.dbCalls[0].doctype, "Laboratory Settings");
+	assert.equal(frm.dfProperties.laboratory_status.read_only, 0);
+	assert.equal(frm.required.pool, false);
+	assert.equal(frm.displayed.accept_failed_result, false);
+	assert.equal(frm.dashboard.clear_headline_count > 0, true);
+	assert.deepEqual(context.route, ["Form", "Weight Bridge Ticket", "WB-990201-01"]);
+});
+
+test("refresh displays passed status and requires pool", async () => {
+	const context = loadScript({}, {
+		evaluation_mode: "Hybrid",
+		minimum_flash_point: 100,
+		maximum_flash_point: 300,
+		minimum_viscosity: 10,
+		maximum_viscosity: 80,
+	});
 	const frm = createFrm({
 		laboratory_status: "Passed",
 		weight_bridge_ticket: "WB-990201-01",
 	});
 
-	context.handlers.refresh(frm);
+	await context.handlers.refresh(frm);
 	frm.buttons[0].handler();
 
+	assert.equal(frm.dfProperties.laboratory_status.read_only, 1);
 	assert.equal(frm.required.pool, true);
 	assert.match(frm.dashboard.headline, /Passed/);
 	assert.deepEqual(context.route, ["Form", "Weight Bridge Ticket", "WB-990201-01"]);
+});
+
+test("accepted with exception requires pool and exception reason in the form", async () => {
+	const context = loadScript({}, {
+		evaluation_mode: "Automatic",
+		minimum_flash_point: 100,
+		maximum_flash_point: 300,
+		minimum_viscosity: 10,
+		maximum_viscosity: 80,
+		allow_failed_test_exception: 1,
+	});
+	const frm = createFrm({
+		laboratory_status: "Accepted With Exception",
+		accept_failed_result: 1,
+	});
+
+	await context.handlers.refresh(frm);
+
+	assert.equal(frm.required.pool, true);
+	assert.equal(frm.required.exception_reason, true);
+	assert.equal(frm.displayed.accept_failed_result, true);
+	assert.equal(frm.displayed.exception_reason, true);
+	assert.match(frm.dashboard.headline, /Accepted With Exception/);
+	assert.match(frm.dashboard.headline, /indicator orange/);
+});
+
+test("checking management exception sets accepted with exception status", () => {
+	const context = loadScript();
+	const frm = createFrm({
+		laboratory_status: "Rejected",
+		accept_failed_result: 1,
+	});
+
+	context.handlers.accept_failed_result(frm);
+
+	assert.equal(frm.doc.laboratory_status, "Accepted With Exception");
+	assert.equal(frm.required.pool, true);
 });
