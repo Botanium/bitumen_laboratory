@@ -116,8 +116,8 @@ function fetch_weight_bridge_ticket(frm) {
 
 function update_status_indicator(frm) {
 	const status = frm.doc.laboratory_status;
+	frm.dashboard.clear_headline();
 	if (!status || status === PENDING_STATUS) {
-		frm.dashboard.clear_headline();
 		return;
 	}
 
