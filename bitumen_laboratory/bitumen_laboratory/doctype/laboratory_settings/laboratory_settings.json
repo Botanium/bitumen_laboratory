@@ -1,0 +1,112 @@
+{
+ "actions": [],
+ "allow_copy": 0,
+ "allow_import": 0,
+ "allow_rename": 0,
+ "creation": "2026-05-11 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Setup",
+ "engine": "InnoDB",
+ "field_order": [
+  "test_limits_section",
+  "minimum_flash_point",
+  "maximum_flash_point",
+  "limits_column_break",
+  "minimum_viscosity",
+  "maximum_viscosity",
+  "weight_bridge_section",
+  "auto_update_weight_bridge_ticket"
+ ],
+ "fields": [
+  {
+   "fieldname": "test_limits_section",
+   "fieldtype": "Section Break",
+   "label": "Test Limits"
+  },
+  {
+   "default": "0",
+   "description": "Minimum accepted Flash Point. Use 0 when there is no minimum.",
+   "fieldname": "minimum_flash_point",
+   "fieldtype": "Float",
+   "label": "Minimum Flash Point",
+   "precision": "3"
+  },
+  {
+   "default": "0",
+   "description": "Maximum accepted Flash Point. Use 0 when there is no maximum.",
+   "fieldname": "maximum_flash_point",
+   "fieldtype": "Float",
+   "label": "Maximum Flash Point",
+   "precision": "3"
+  },
+  {
+   "fieldname": "limits_column_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "description": "Minimum accepted Viscosity. Use 0 when there is no minimum.",
+   "fieldname": "minimum_viscosity",
+   "fieldtype": "Float",
+   "label": "Minimum Viscosity",
+   "precision": "3"
+  },
+  {
+   "default": "0",
+   "description": "Maximum accepted Viscosity. Use 0 when there is no maximum.",
+   "fieldname": "maximum_viscosity",
+   "fieldtype": "Float",
+   "label": "Maximum Viscosity",
+   "precision": "3"
+  },
+  {
+   "fieldname": "weight_bridge_section",
+   "fieldtype": "Section Break",
+   "label": "Weight Bridge Integration"
+  },
+  {
+   "default": "1",
+   "description": "When a laboratory test is submitted, update the linked Weight Bridge Ticket with Passed or Rejected laboratory status.",
+   "fieldname": "auto_update_weight_bridge_ticket",
+   "fieldtype": "Check",
+   "label": "Update Weight Bridge Ticket on Submit"
+  }
+ ],
+ "hide_heading": 0,
+ "idx": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-05-11 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bitumen Laboratory",
+ "name": "Laboratory Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Laboratory Supervisor",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Laboratory Technician"
+  }
+ ],
+ "quick_entry": 0,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
+

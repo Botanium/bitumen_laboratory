@@ -1,0 +1,238 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-05-11 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "truck_section",
+  "test_datetime",
+  "plate_number",
+  "weight_bridge_ticket",
+  "truck_column_break",
+  "driver",
+  "driver_name",
+  "operator",
+  "cargo_section",
+  "cargo_item",
+  "weight",
+  "cargo_column_break",
+  "weight_datetime",
+  "pool",
+  "test_section",
+  "flash_point",
+  "viscosity",
+  "result_column_break",
+  "laboratory_status",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "truck_section",
+   "fieldtype": "Section Break",
+   "label": "Truck"
+  },
+  {
+   "fieldname": "test_datetime",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date and Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "plate_number",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Truck Plate Number",
+   "options": "Weight Bridge Truck",
+   "reqd": 1
+  },
+  {
+   "fieldname": "weight_bridge_ticket",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Weight Bridge Ticket",
+   "options": "Weight Bridge Ticket",
+   "reqd": 1
+  },
+  {
+   "fieldname": "truck_column_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "driver",
+   "fieldtype": "Link",
+   "label": "Driver Phone Number",
+   "options": "Weight Bridge Driver",
+   "read_only": 1
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Driver Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "operator",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Lab User",
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cargo_section",
+   "fieldtype": "Section Break",
+   "label": "Weight Bridge Details"
+  },
+  {
+   "fieldname": "cargo_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "weight",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Weight (Kg)",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cargo_column_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "weight_datetime",
+   "fieldtype": "Datetime",
+   "label": "Weight Date and Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pool",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Pool",
+   "mandatory_depends_on": "eval:doc.laboratory_status=='Passed'",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "test_section",
+   "fieldtype": "Section Break",
+   "label": "Tests"
+  },
+  {
+   "fieldname": "flash_point",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Flash Point",
+   "precision": "3",
+   "reqd": 1
+  },
+  {
+   "fieldname": "viscosity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Viscosity",
+   "precision": "3",
+   "reqd": 1
+  },
+  {
+   "fieldname": "result_column_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "laboratory_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Laboratory Status",
+   "options": "Draft\nPassed\nRejected",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Laboratory Truck Test",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "icon": "fa fa-flask",
+ "idx": 0,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-05-11 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bitumen Laboratory",
+ "name": "Laboratory Truck Test",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Laboratory Technician",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Laboratory Supervisor",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Weight Bridge Supervisor"
+  }
+ ],
+ "quick_entry": 0,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,13 @@
+[project]
+name = "bitumen_laboratory"
+authors = [
+    { name = "Botanium", email = "botan.b.abdullah@gmail.com" }
+]
+description = "Laboratory module for Bitumen factory truck tests"
+requires-python = ">=3.10"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = []
+
+[tool.bench.dev-dependencies]
+

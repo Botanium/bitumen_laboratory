@@ -1,0 +1,4 @@
+recursive-include bitumen_laboratory *.json *.js *.py *.txt
+include README.md
+include license.txt
+
