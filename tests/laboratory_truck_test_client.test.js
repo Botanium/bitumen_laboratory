@@ -52,7 +52,41 @@ function loadScript(ticketResponse = {}, settingsResponse = {}) {
 	return context;
 }
 
+function createMessageContainer() {
+	return {
+		hidden: true,
+		messages: [],
+		addClass(class_name) {
+			if (class_name === "hidden") {
+				this.hidden = true;
+			}
+			return this;
+		},
+		appendMessage(value) {
+			this.messages.push(value);
+			this.hidden = false;
+		},
+		children() {
+			return { length: this.messages.length };
+		},
+		find(selector) {
+			return {
+				closest: () => ({
+					remove: () => {
+						if (selector === ".laboratory-status-alert") {
+							this.messages = this.messages.filter(
+								(message) => !message.includes("laboratory-status-alert")
+							);
+						}
+					},
+				}),
+			};
+		},
+	};
+}
+
 function createFrm(doc = {}) {
+	const message = createMessageContainer();
 	return {
 		doc: {
 			doctype: "Laboratory Truck Test",
@@ -67,7 +101,11 @@ function createFrm(doc = {}) {
 			},
 			set_headline_alert(value) {
 				this.headline = value;
+				message.appendMessage(value);
 			},
+		},
+		layout: {
+			message,
 		},
 		add_custom_button(label, handler) {
 			this.buttons.push({ label, handler });
@@ -171,7 +209,7 @@ test("hybrid refresh without configured criteria keeps status editable and does 
 	assert.equal(frm.dfProperties.laboratory_status.read_only, 0);
 	assert.equal(frm.required.pool, false);
 	assert.equal(frm.displayed.accept_failed_result, false);
-	assert.equal(frm.dashboard.clear_headline_count > 0, true);
+	assert.equal(frm.layout.message.messages.length, 0);
 	assert.deepEqual(context.route, ["Form", "Weight Bridge Ticket", "WB-990201-01"]);
 });
 
@@ -194,6 +232,7 @@ test("refresh displays passed status and requires pool", async () => {
 	assert.equal(frm.dfProperties.laboratory_status.read_only, 1);
 	assert.equal(frm.required.pool, true);
 	assert.match(frm.dashboard.headline, /Passed/);
+	assert.equal(frm.layout.message.messages.length, 1);
 	assert.deepEqual(context.route, ["Form", "Weight Bridge Ticket", "WB-990201-01"]);
 });
 
@@ -219,6 +258,26 @@ test("accepted with exception requires pool and exception reason in the form", a
 	assert.equal(frm.displayed.exception_reason, true);
 	assert.match(frm.dashboard.headline, /Accepted With Exception/);
 	assert.match(frm.dashboard.headline, /indicator orange/);
+});
+
+test("status indicator replaces the previous laboratory alert without removing core messages", () => {
+	const context = loadScript();
+	const frm = createFrm({ laboratory_status: "Rejected" });
+	frm.layout.message.appendMessage("<div>Submit this document to confirm</div>");
+
+	context.module.exports.update_status_indicator(frm);
+	context.module.exports.update_status_indicator(frm);
+
+	assert.equal(frm.layout.message.messages.length, 2);
+	assert.equal(
+		frm.layout.message.messages.filter((message) => message.includes("laboratory-status-alert")).length,
+		1
+	);
+	assert.equal(
+		frm.layout.message.messages.filter((message) => message.includes("Submit this document")).length,
+		1
+	);
+	assert.match(frm.layout.message.messages.join("\n"), /Rejected/);
 });
 
 test("checking management exception sets accepted with exception status", () => {

@@ -116,15 +116,27 @@ function fetch_weight_bridge_ticket(frm) {
 
 function update_status_indicator(frm) {
 	const status = frm.doc.laboratory_status;
-	frm.dashboard.clear_headline();
+	clear_status_indicator(frm);
 	if (!status || status === PENDING_STATUS) {
 		return;
 	}
 
 	const indicator = status === PASS_STATUS ? "green" : status === EXCEPTION_STATUS ? "orange" : "red";
 	frm.dashboard.set_headline_alert(
-		`<div class="indicator ${indicator}">${__("Laboratory Test")}: ${__(status)}</div>`
+		`<div class="laboratory-status-alert indicator ${indicator}">${__("Laboratory Test")}: ${__(status)}</div>`
 	);
+}
+
+function clear_status_indicator(frm) {
+	if (frm.layout && frm.layout.message) {
+		frm.layout.message.find(".laboratory-status-alert").closest(".form-message").remove();
+		if (!frm.layout.message.children().length) {
+			frm.layout.message.addClass("hidden");
+		}
+		return;
+	}
+
+	frm.dashboard.clear_headline();
 }
 
 function update_decision_controls(frm) {
@@ -168,6 +180,7 @@ function has_configured_limit(minimum, maximum) {
 if (typeof module !== "undefined") {
 	module.exports = {
 		apply_laboratory_settings,
+		clear_status_indicator,
 		fetch_weight_bridge_ticket,
 		has_configured_criteria,
 		load_laboratory_settings,
