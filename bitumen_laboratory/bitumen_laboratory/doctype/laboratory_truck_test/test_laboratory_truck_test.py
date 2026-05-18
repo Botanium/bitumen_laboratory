@@ -252,6 +252,10 @@ class TestLaboratoryTruckTest(FrappeTestCase):
 		self.assertIsNotNone(settings_meta.get_field("allow_failed_test_exception"))
 		self.assertIsNotNone(weight_bridge_meta.get_field("laboratory_status"))
 		self.assertIsNotNone(weight_bridge_meta.get_field("laboratory_test"))
+		self.assertEqual(weight_bridge_meta.get_field("laboratory_section").insert_after, "net_weight")
+		self.assertEqual(weight_bridge_meta.get_field("laboratory_status").insert_after, "laboratory_section")
+		self.assertEqual(weight_bridge_meta.get_field("laboratory_test").insert_after, "laboratory_status")
+		self.assertEqual(weight_bridge_meta.get_field("laboratory_pool").insert_after, "laboratory_test")
 		self.assertIn(
 			"Accepted With Exception",
 			weight_bridge_meta.get_field("laboratory_status").options.split("\n"),

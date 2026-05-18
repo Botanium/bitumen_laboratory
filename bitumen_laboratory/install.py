@@ -135,7 +135,7 @@ def ensure_weight_bridge_ticket_lab_fields():
 				{
 					"fieldname": "laboratory_section",
 					"fieldtype": "Section Break",
-					"insert_after": "ticket_status",
+					"insert_after": "net_weight",
 					"label": "Laboratory",
 					"collapsible": 1,
 				},
