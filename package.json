@@ -1,7 +1,0 @@
-{
-  "name": "bitumen_laboratory_client_tests",
-  "private": true,
-  "scripts": {
-    "test": "node --test tests/*.test.js"
-  }
-}
